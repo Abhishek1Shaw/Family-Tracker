@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { db } from "../firebase";
 
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  onSnapshot,
+  updateDoc,
+} from "firebase/firestore";
 
 export default function Home() {
   const members = ["Arti", "Sujata", "Rekha", "Sangita"];
@@ -10,25 +14,23 @@ export default function Home() {
   const [payments, setPayments] = useState({});
 
   useEffect(() => {
-    loadData();
+    const unsubscribe = onSnapshot(
+      doc(db, "payments", "family"),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setPayments(snapshot.data());
+        }
+      }
+    );
+
+    return () => unsubscribe();
   }, []);
-
-  async function loadData() {
-    const docRef = doc(db, "payments", "family");
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      setPayments(docSnap.data());
-    }
-  }
 
   async function togglePayment(name) {
     const updated = {
       ...payments,
       [name]: !payments[name],
     };
-
-    setPayments(updated);
 
     await updateDoc(
       doc(db, "payments", "family"),
@@ -51,7 +53,7 @@ export default function Home() {
             border: "1px solid gray",
             padding: 10,
             marginBottom: 10,
-            borderRadius: 10,
+            borderRadius: 10
           }}
         >
           <h3>{member}</h3>
